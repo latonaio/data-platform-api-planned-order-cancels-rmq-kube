@@ -87,24 +87,24 @@ func (c *DPFMAPICaller) headerCancel(
 
 	header := c.HeaderRead(input, log)
 	if header == nil {
-		return nil, nil, nil, nil
+		return nil, nil
 	}
 	header.IsCancelled = input.Header.IsCancelled
 	res, err := c.rmq.SessionKeepRequest(nil, c.conf.RMQ.QueueToSQL()[0], map[string]interface{}{"message": header, "function": "PlannedOrderHeader", "runtime_session_id": sessionID})
 	if err != nil {
 		err = xerrors.Errorf("rmq error: %w", err)
 		log.Error("%+v", err)
-		return nil, nil, nil, nil
+		return nil, nil
 	}
 	res.Success()
 	if !checkResult(res) {
 		output.SQLUpdateResult = getBoolPtr(false)
 		output.SQLUpdateError = "Header Data cannot cancel"
-		return nil, nil, nil, nil
+		return nil, nil
 	}
 	// headerのキャンセルが取り消された時は子に影響を与えない
 	if !*header.IsCancelled {
-		return header, nil, nil, nil
+		return header, nil
 	}
 
 	items := c.ItemsRead(input, log)
@@ -114,13 +114,13 @@ func (c *DPFMAPICaller) headerCancel(
 		if err != nil {
 			err = xerrors.Errorf("rmq error: %w", err)
 			log.Error("%+v", err)
-			return nil, nil, nil, nil
+			return nil, nil
 		}
 		res.Success()
 		if !checkResult(res) {
 			output.SQLUpdateResult = getBoolPtr(false)
 			output.SQLUpdateError = "Item Data cannot cancel"
-			return nil, nil, nil, nil
+			return nil, nil
 		}
 	}
 
